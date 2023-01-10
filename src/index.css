@@ -6,4 +6,7 @@
 	input {
 		@apply border-2 w-1/2;
 	}
+	span{
+		@apply text-red-600 font-semibold
+	}
 }
