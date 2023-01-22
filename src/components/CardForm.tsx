@@ -1,92 +1,104 @@
-import { FormikErrors, useFormik } from 'formik';
-
-interface FormValues {
-	cardHolderName: string;
-	cardNumber: string;
-	month: string;
-	year: string;
-	cvc: string;
-}
-const cardNumberRegex =
-	/^(?:4[0-9]{12}(?:[0-9]{3})?|[25][1-7][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\d{3})\d{11})$/;
-const cardHolderNameRegex = /^[a-zA-ZñÑ ]+$/;
-const cvcRegex = /^[0-9]{3,4}$/;
-const monthRegex = /^(0[1-9]|1[0-2])$/;
-const yearRegex = /^[0-9]{4}$/;
+import { ErrorMessage, Formik } from 'formik';
+import { useContext } from 'react';
+import { CardContext } from '../context';
+import * as Yup from 'yup';
+import { cardHolderNameRegex, cardNumberRegex, cvcRegex, monthRegex, yearRegex } from '../regex';
 export const CardForm = () => {
-	const validate = ({ cardHolderName, cardNumber, cvc, month, year }: FormValues) => {
-		const errors: FormikErrors<FormValues> = {};
-		if (!cardHolderName) {
-			errors.cardHolderName = 'Required';
-		} else if (!cardHolderNameRegex.test(cardHolderName)) {
-			errors.cardHolderName = 'Invalid name';
-		}
-		if (!cardNumber) {
-			errors.cardNumber = 'Required';
-		} else if (!cardNumberRegex.test(cardNumber)) {
-			errors.cardNumber = 'Invalid card number';
-		}
-		if (!cvc) {
-			errors.cvc = 'Required';
-		} else if (!cvcRegex.test(cvc)) {
-			errors.cvc = 'Invalid CVC';
-		}
-		if (!month) {
-			errors.month = 'Required';
-		} else if (!monthRegex.test(month)) {
-			errors.month = 'Invalid month';
-		}
-		if (!year) {
-			errors.year = 'Required';
-		} else if (!yearRegex.test(year)) {
-			errors.year = 'Invalid year';
-		}
-		return errors;
-	};
+	const { dispatch, state } = useContext(CardContext);
 
-	const { errors, handleSubmit, touched, handleChange, values, handleBlur } = useFormik({
-		initialValues: {
-			cardHolderName: '',
-			cardNumber: '',
-			month: '',
-			year: '',
-			cvc: '',
-		},
-		onSubmit: console.log,
-		validate,
-	});
 	return (
-		<div>
-			<h1>Card form with basic Formik - useFormik</h1>
+		<Formik
+			initialValues={state}
+			validationSchema={Yup.object().shape({
+				cardHolderName: Yup.string()
+					.min(6, 'Enter a valid name (More than 6 characters)')
+					.matches(cardHolderNameRegex, 'Invalid card holder name')
+					.required('Card holder name is required'),
+				cardNumber: Yup.string().matches(cardNumberRegex, 'Invalid card number').required('Card number is required'),
+				month: Yup.string().matches(monthRegex, 'Invalid month').required('Expiration month is required'),
+				year: Yup.string().matches(yearRegex, 'Invalid year').required('Expiration year is required'),
+				cvc: Yup.string().matches(cvcRegex, 'Invalid CVC code').required('CVC code is required'),
+			})}
+			onSubmit={values => {
+				console.log(values);
+			}}>
+			{({ values, handleChange, handleSubmit }) => {
+				return (
+					<form className='p-5 mt-14 space-y-3' onSubmit={handleSubmit}>
+						<div className='flex flex-col'>
+							<label>Cardholder Name</label>
+							<input
+								value={values.cardHolderName}
+								onChange={event => {
+									handleChange(event);
+									dispatch({ type: 'update', payload: { ...state, cardHolderName: event.target.value } });
+								}}
+								name='cardHolderName'
+								placeholder='e.g. Jane Appleseed'
+							/>
+							<ErrorMessage name='cardHolderName' component={'span'} />
+						</div>
+						<div className='flex flex-col'>
+							<label>Card number</label>
+							<input
+								value={values.cardNumber}
+								onChange={event => {
+									handleChange(event);
+									dispatch({ type: 'update', payload: { ...state, cardNumber: event.target.value } });
+								}}
+								name='cardNumber'
+								placeholder='e.g. 1234 5678 9123 0000'
+							/>
+							<ErrorMessage name='cardNumber' component={'span'} />
+						</div>
+						<div className='flex space-x-2'>
+							<div className='flex flex-col w-[25%]'>
+								<label>Month</label>
+								<input
+									value={values.month}
+									onChange={event => {
+										handleChange(event);
+										dispatch({ type: 'update', payload: { ...state, month: event.target.value } });
+									}}
+									name='month'
+									placeholder='MM'
+								/>
+								<ErrorMessage name='month' component={'span'} />
+							</div>
 
-			<form onSubmit={handleSubmit} className='flex flex-col'>
-				<label htmlFor='cardHolderName'>Cardholder Name</label>
-				<input
-					type='text'
-					name='cardHolderName'
-					onChange={handleChange}
-					value={values.cardHolderName}
-					onBlur={handleBlur}
-				/>
-				{touched.cardHolderName && errors.cardHolderName && <span>{errors.cardHolderName}</span>}
-				<label htmlFor='cardNumber'>Card Number</label>
-				<input type='text' name='cardNumber' onChange={handleChange} value={values.cardNumber} onBlur={handleBlur} />
-				{touched.cardNumber && errors.cardNumber && <span>{errors.cardNumber}</span>}
-				<div className='flex flex-col'>
-					<label htmlFor='month'>Month</label>
-					<input type='text' name='month' onChange={handleChange} value={values.month} onBlur={handleBlur} />
-					{touched.month && errors.month && <span>{errors.month}</span>}
-					<label htmlFor='year'>Year</label>
-					<input type='text' name='year' onChange={handleChange} value={values.year} onBlur={handleBlur} />
-					{touched.year && errors.year && <span>{errors.year}</span>}
-					<label htmlFor='cvc'>CVC</label>
-					<input type='password' name='cvc' onChange={handleChange} value={values.cvc} onBlur={handleBlur} />
-					{touched.cvc && errors.cvc && <span>{errors.cvc}</span>}
-				</div>
-				<button className='rounded-lg bg-blue-500 text-lg p-1 w-1/2 mt-5' type='submit'>
-					Submit
-				</button>
-			</form>
-		</div>
+							<div className='flex flex-col w-[25%]'>
+								<label>Year</label>
+								<input
+									value={values.year}
+									onChange={event => {
+										handleChange(event);
+										dispatch({ type: 'update', payload: { ...state, year: event.target.value } });
+									}}
+									name='year'
+									placeholder='YY'
+								/>
+								<ErrorMessage name='year' component={'span'} />
+							</div>
+							<div className='flex flex-col w-[45%]'>
+								<label>CVC</label>
+								<input
+									value={values.cvc}
+									onChange={event => {
+										handleChange(event);
+										dispatch({ type: 'update', payload: { ...state, cvc: event.target.value } });
+									}}
+									name='cvc'
+									placeholder='e.g. 123'
+								/>
+								<ErrorMessage name='cvc' component={'span'} />
+							</div>
+						</div>
+						<button type='submit' className='btn'>
+							Confirm
+						</button>
+					</form>
+				);
+			}}
+		</Formik>
 	);
 };

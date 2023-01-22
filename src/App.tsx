@@ -1,12 +1,12 @@
-import { CardForm } from './components';
+import { CardForm, Header } from './components';
 
 const App = () => {
+
 	return (
-		<div>
-			<h3>Card Form App</h3>
-			<hr />
+		<>
+			<Header  />
 			<CardForm />
-		</div>
+		</>
 	);
 };
 
