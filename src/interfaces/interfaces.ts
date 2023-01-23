@@ -4,4 +4,5 @@ export interface FormValues {
 	month: string;
 	year: string;
 	cvc: string;
+	isCompleted: boolean;
 }
